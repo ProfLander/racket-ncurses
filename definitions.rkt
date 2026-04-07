@@ -42,7 +42,7 @@
 (define-curses wattroff (_fun _WINDOW-pointer _int -> _int))
 (define-curses wattron (_fun _WINDOW-pointer _int -> _int))
 (define-curses attrset (_fun _int -> _int))
-(define-curses attr_set (_fun _attr_t _short -> _int))
+(define-curses attr_set (_fun _attr_t _short _pointer -> _int))
 (define-curses wattrset (_fun _WINDOW-pointer _int -> _int))
 (define-curses bkgd (_fun _long -> _int))
 (define-curses wbkgd (_fun _WINDOW-pointer _long -> _int))
@@ -95,9 +95,10 @@
 (define-curses keypad (_fun _WINDOW-pointer _bool -> _int))
 
 ;ATTRS
-(define-curses attr_get (_fun (a : (_ptr o _ulong))
+(define-curses attr_get (_fun (a : (_ptr o _attr_t))
                               (c : (_ptr o _short))
-                              -> _int -> (list a c)))
+                              (o : (_ptr o _pointer))
+                              -> _int -> (list a c o)))
 ;MISC;
 (define-curses beep (_fun -> _int))
 (define-curses baudrate (_fun -> _int))

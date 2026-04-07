@@ -1,5 +1,7 @@
 #lang racket/base
 
+(require racket/match)
+
 (require (prefix-in ffi: "definitions.rkt"))
 (require "constants.rkt")
 
@@ -14,17 +16,24 @@
 (define (attron #:win [win (stdscr)] . attrs)
   (ffi:wattron win (fold-attrs attrs)))
 
+(define (attr-get)
+  (match-let ([(list attr pair opts) (ffi:attr_get)])
+    (list attr pair)))
+
+(define (attr-set! attr pair)
+  (ffi:attr_set attr pair #f))
+
 (define (addstr str
                 #:win [win (stdscr)]
                 #:y   [y (ffi:getcury win)]
                 #:x   [x (ffi:getcurx win)]
                 #:n   [n -1]
                 . attrs)
-  (let ([previous-attrs (fold-attrs (ffi:attr_get))])
+  (match-let* ([(list attr pair) (attr-get)])
     (parameterize ([stdscr win])
       (apply attron attrs)
       (ffi:mvwaddnstr win y x str n)
-      (attr-set! previous-attrs))))
+      (attr-set! attr pair))))
 
 (define (addchstr str
                   #:win [win (stdscr)]
@@ -64,11 +73,12 @@
 (define curs-set ffi:curs_set)
 (define newwin ffi:newwin)
 (define delwin ffi:delwin)
-(define (refresh #:win [win (stdscr)])
-  (ffi:wrefresh win))
 (define keypad ffi:keypad)
 (define init-pair! ffi:init_pair)
-(define attr-set! ffi:attrset)
+
+(define (refresh #:win [win (stdscr)])
+  (ffi:wrefresh win))
+
 (define (color-pair n)
   (arithmetic-shift n 8))
 
