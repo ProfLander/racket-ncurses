@@ -2,7 +2,8 @@
 
 (require racket/match)
 
-(require (prefix-in ffi: "definitions.rkt"))
+(require (prefix-in ncurses: "bindings/ncurses.rkt"))
+(require (prefix-in panel: "bindings/panel.rkt"))
 (require "constants.rkt")
 
 (provide (all-from-out "constants.rkt"))
@@ -14,83 +15,86 @@
 (define stdscr (make-parameter #f))
 
 (define (attron #:win [win (stdscr)] . attrs)
-  (ffi:wattron win (fold-attrs attrs)))
+  (ncurses:wattron win (fold-attrs attrs)))
 
 (define (attr-get)
-  (match-let ([(list attr pair opts) (ffi:attr_get)])
+  (match-let ([(list attr pair opts) (ncurses:attr_get)])
     (list attr pair)))
 
 (define (attr-set! attr pair)
-  (ffi:attr_set attr pair #f))
+  (ncurses:attr_set attr pair #f))
 
 (define (addstr str
                 #:win [win (stdscr)]
-                #:y   [y (ffi:getcury win)]
-                #:x   [x (ffi:getcurx win)]
+                #:y   [y (ncurses:getcury win)]
+                #:x   [x (ncurses:getcurx win)]
                 #:n   [n -1]
                 . attrs)
   (match-let* ([(list attr pair) (attr-get)])
     (parameterize ([stdscr win])
       (apply attron attrs)
-      (ffi:mvwaddnstr win y x str n)
+      (ncurses:mvwaddnstr win y x str n)
       (attr-set! attr pair))))
 
 (define (addchstr str
                   #:win [win (stdscr)]
-                  #:y   [y (ffi:getcury win)]
-                  #:x   [x (ffi:getcurx win)]
+                  #:y   [y (ncurses:getcury win)]
+                  #:x   [x (ncurses:getcurx win)]
                   . attrs)
   (let* ([attrs (fold-attrs attrs)]
          [chlist (for/list ([ch (string->list str)])
                    (bitwise-ior (char->integer ch) attrs))]) 
-    (ffi:mvwaddchstr win y x (ffi:chlist->chstr chlist))))
+    (ncurses:mvwaddchstr win y x (ncurses:chlist->chstr chlist))))
 
 (define (addch ch #:win [win (stdscr)]
-               #:y [y (ffi:getcury win)]
-               #:x [x (ffi:getcurx win)]
+               #:y [y (ncurses:getcury win)]
+               #:x [x (ncurses:getcurx win)]
                . attrs)
   (let* ([attrs (fold-attrs attrs)] 
          [ch (bitwise-ior (char->integer ch) attrs)])
-    (ffi:mvwaddch win y x ch)))
+    (ncurses:mvwaddch win y x ch)))
 
 (define (getch #:win [win (stdscr)])
-  (ffi:wgetch win))
+  (let ([byte (ncurses:wgetch win)])
+    (if (< -1 byte) 
+        (integer->char byte)
+        #f)))
 
 (define (border #:win [win (stdscr)]
                 #:ch0 [ch0 0] #:ch1 [ch1 0] #:ch2 [ch2 0] #:ch3 [ch3 0]
                 #:ch4 [ch4 0] #:ch5 [ch5 0] #:ch6 [ch6 0] #:ch7 [ch7 0])
-  (ffi:wborder win ch0 ch1 ch2 ch3 ch4 ch5 ch6 ch7))
+  (ncurses:wborder win ch0 ch1 ch2 ch3 ch4 ch5 ch6 ch7))
 
 (define (getmaxyx [win (stdscr)])
-  (values (ffi:getmaxy win) (ffi:getmaxx win)))
+  (values (ncurses:getmaxy win) (ncurses:getmaxx win)))
 (define (get-curyx win)
-  (values (ffi:getcury win) (ffi:getcurx win)))
+  (values (ncurses:getcury win) (ncurses:getcurx win)))
 
-(define echo! ffi:echo)
-(define noecho! ffi:noecho)
-(define nodelay ffi:nodelay)
+(define echo! ncurses:echo)
+(define noecho! ncurses:noecho)
+(define nodelay ncurses:nodelay)
 
-(define curs-set ffi:curs_set)
-(define newwin ffi:newwin)
-(define delwin ffi:delwin)
-(define keypad ffi:keypad)
-(define init-pair! ffi:init_pair)
+(define curs-set ncurses:curs_set)
+(define newwin ncurses:newwin)
+(define delwin ncurses:delwin)
+(define keypad ncurses:keypad)
+(define init-pair! ncurses:init_pair)
 
 (define (refresh #:win [win (stdscr)])
-  (ffi:wrefresh win))
+  (ncurses:wrefresh win))
 
 (define (color-pair n)
   (arithmetic-shift n 8))
 
 (define (with-ncurses func
                       #:start-color? [start-color? #t])
-  (stdscr (ffi:initscr))
-  (when (and (ffi:has_colors) start-color?)
-    (ffi:start_color))
+  (stdscr (ncurses:initscr))
+  (when (and (ncurses:has_colors) start-color?)
+    (ncurses:start_color))
   (define init? #t)
   (define (cleanup!)
     (when init?
-      (ffi:endwin)
+      (ncurses:endwin)
       (set! init? #f)))
   (call-with-exception-handler
     (lambda (exn)

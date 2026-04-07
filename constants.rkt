@@ -1,4 +1,5 @@
 #lang racket/base
+
 (provide (all-defined-out))
 
 (define A_NORMAL         #b0)

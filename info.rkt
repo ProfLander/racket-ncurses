@@ -4,4 +4,4 @@
 (define build-deps '())
 (define pkg-desc "ncurses bindings for Racket")
 (define version "0.0")
-(define pkg-authors '(dys-bigwig))
+(define pkg-authors '(dys-bigwig lander))

@@ -1,19 +1,23 @@
 #lang racket/base
+
 (require ffi/unsafe
          ffi/unsafe/define
          ffi/unsafe/cvector)
+
 (provide (all-defined-out))
 
-(define-ffi-definer define-curses (ffi-lib "libncurses" '("5" #f)))
-(define-ffi-definer define-panel (ffi-lib "libpanel" '("5" #f)))
-
-(define _WINDOW-pointer (_cpointer 'WINDOW))
 (define _chtype _ulong)
 (define _chstr _cvector)
 (define _attr_t _ulong)
-(define (chlist->chstr chars) (list->cvector (append chars '(0)) _chtype))
 
-;ADDCH FUNCTIONS;
+(define (chlist->chstr chars) 
+  (list->cvector (append chars '(0)) _chtype))
+
+(define _WINDOW-pointer (_cpointer 'WINDOW))
+
+(define-ffi-definer define-curses (ffi-lib "libncurses" '("5" #f)))
+
+; Addch
 
 (define-curses addch (_fun _chtype -> _int))
 (define-curses waddch (_fun _WINDOW-pointer _chtype -> _int))
@@ -21,7 +25,8 @@
 (define-curses mvwaddch (_fun _WINDOW-pointer _int _int _chtype -> _int))
 (define-curses addchstr (_fun _chstr -> _int))
 
-;ADDSTR FUNCTIONS
+; Addstr
+
 (define-curses addstr (_fun _string -> _int))
 (define-curses addnstr (_fun _string _int -> _int))
 (define-curses waddstr (_fun _WINDOW-pointer _string -> _int))
@@ -32,7 +37,8 @@
 (define-curses mvwaddnstr (_fun _WINDOW-pointer _int _int _string _int -> _int))
 (define-curses mvwaddchstr (_fun _WINDOW-pointer _int _int _chstr -> _int))
 
-;COLOUR/GRAPHICAL FUNCTIONS
+; Color / Graphical
+
 (define-curses assume_default_colors (_fun _int _int -> _int))
 (define-curses has_colors (_fun -> _bool))
 (define-curses start_color (_fun -> _int))
@@ -65,7 +71,8 @@
                              _int _int _int _int _int _int _int
                              -> _int))
 
-;INITIALIZATION FUNCTIONS;
+; Initialization
+
 (define-curses initscr (_fun -> _WINDOW-pointer))
 (define-curses curs_set (_fun _int -> _int))
 (define-curses newwin (_fun _int _int _int _int -> _WINDOW-pointer))
@@ -76,30 +83,33 @@
                             _int _int _int _int
                             -> _WINDOW-pointer))
 
-;SCREEN-UPDATE FUNCTIONS;
+; Screen update
+
 (define-curses doupdate (_fun -> _void))
 (define-curses wnoutrefresh (_fun _WINDOW-pointer -> _int))
 (define-curses refresh (_fun -> _int))
 (define-curses wrefresh (_fun _WINDOW-pointer -> _int))
 (define-curses leaveok (_fun _WINDOW-pointer _bool -> _int))
 
-;INPUT FUNCTIONS;
+; Input
+
 (define-curses echo (_fun -> _int))
 (define-curses noecho (_fun -> _int))
 (define-curses cbreak (_fun -> _int))
 (define-curses nocbreak (_fun -> _int))
 (define-curses getch (_fun -> _int))
-(define-curses wgetch (_fun _WINDOW-pointer
-                            -> (c : _int)
-                            -> (integer->char c)))
+(define-curses wgetch (_fun _WINDOW-pointer -> _int))
 (define-curses keypad (_fun _WINDOW-pointer _bool -> _int))
 
-;ATTRS
+; Attrs
+
 (define-curses attr_get (_fun (a : (_ptr o _attr_t))
                               (c : (_ptr o _short))
                               (o : (_ptr o _pointer))
                               -> _int -> (list a c o)))
-;MISC;
+
+; Misc
+
 (define-curses beep (_fun -> _int))
 (define-curses baudrate (_fun -> _int))
 (define-curses move (_fun _int _int -> _int))
@@ -115,9 +125,4 @@
 (define-curses getcurx (_fun _WINDOW-pointer -> _int))
 (define-curses napms (_fun _int -> _int))
 (define-curses can_change_color (_fun -> _bool))
-(define-curses nodelay (_fun _bool -> _int))
-
-;PANELS;
-(define-panel new_panel (_fun _WINDOW-pointer -> _int))
-(define-panel update_panels (_fun -> _int))
-
+(define-curses nodelay (_fun _WINDOW-pointer _bool -> _int))

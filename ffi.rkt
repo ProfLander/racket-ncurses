@@ -1,5 +1,5 @@
 #lang racket/base
 (require "constants.rkt")
-(require "definitions.rkt")
+(require "bindings/main.rkt")
 (provide (all-from-out "constants.rkt"
-                       "definitions.rkt"))
+                       "bindings/main.rkt"))
