@@ -17,6 +17,9 @@
 (define (attron #:win [win (stdscr)] . attrs)
   (ncurses:wattron win (fold-attrs attrs)))
 
+(define (attroff #:win [win (stdscr)] . attrs)
+  (ncurses:wattroff win (fold-attrs attrs)))
+
 (define (attr-get)
   (match-let ([(list attr pair opts) (ncurses:attr_get)])
     (list attr pair)))
@@ -60,13 +63,34 @@
         (integer->char byte)
         #f)))
 
-(define (border #:win [win (stdscr)]
-                #:ch0 [ch0 0] #:ch1 [ch1 0] #:ch2 [ch2 0] #:ch3 [ch3 0]
-                #:ch4 [ch4 0] #:ch5 [ch5 0] #:ch6 [ch6 0] #:ch7 [ch7 0])
-  (ncurses:wborder win ch0 ch1 ch2 ch3 ch4 ch5 ch6 ch7))
+(define (border #:win     [win (stdscr)]
+                #:char-l  [sl #\│] 
+                #:char-r  [sr #\│] 
+                #:char-u  [su #\─] 
+                #:char-d  [sd #\─]
+                #:char-ul [ul #\╭] 
+                #:char-ur [ur #\╮] 
+                #:char-dl [dl #\╰] 
+                #:char-dr [dr #\╯])
+  (ncurses:wborder_set win
+    (ncurses:setcchar (char->integer sl) 0 0 #f) 
+    (ncurses:setcchar (char->integer sr) 0 0 #f) 
+    (ncurses:setcchar (char->integer su) 0 0 #f) 
+    (ncurses:setcchar (char->integer sd) 0 0 #f)
+    (ncurses:setcchar (char->integer ul) 0 0 #f) 
+    (ncurses:setcchar (char->integer ur) 0 0 #f) 
+    (ncurses:setcchar (char->integer dl) 0 0 #f) 
+    (ncurses:setcchar (char->integer dr) 0 0 #f)))
+
+(define (getmaxxy [win (stdscr)])
+  (values (ncurses:getmaxx win) (ncurses:getmaxy win)))
 
 (define (getmaxyx [win (stdscr)])
   (values (ncurses:getmaxy win) (ncurses:getmaxx win)))
+
+(define (get-curxy win)
+  (values (ncurses:getcurx win) (ncurses:getcury win)))
+
 (define (get-curyx win)
   (values (ncurses:getcury win) (ncurses:getcurx win)))
 
@@ -86,20 +110,25 @@
 (define (color-pair n)
   (arithmetic-shift n 8))
 
-(define (with-ncurses func
-                      #:start-color? [start-color? #t])
+(define (%with-ncurses func)
   (stdscr (ncurses:initscr))
-  (when (and (ncurses:has_colors) start-color?)
+
+  (when (ncurses:has_colors)
     (ncurses:start_color))
+
   (define init? #t)
+
   (define (cleanup!)
     (when init?
       (ncurses:endwin)
       (set! init? #f)))
+
   (call-with-exception-handler
+
     (lambda (exn)
       (cleanup!)
       exn)
+
     (lambda ()
       (call-with-continuation-barrier
         (lambda ()
@@ -107,3 +136,8 @@
             void
             (λ () (void (func)))
             cleanup!))))))
+
+(define-syntax-rule (with-ncurses body ...)
+  (%with-ncurses 
+    (lambda () 
+      body ...)))

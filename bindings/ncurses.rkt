@@ -9,11 +9,16 @@
 (define _chtype _ulong)
 (define _chstr _cvector)
 (define _attr_t _ulong)
+(define _pair_t _short)
 
 (define (chlist->chstr chars) 
   (list->cvector (append chars '(0)) _chtype))
 
 (define _WINDOW-pointer (_cpointer 'WINDOW))
+
+(define-cstruct _cchar_t ([attr _attr_t] 
+                          [wchar (make-array-type _wchar 5)]
+                          [ext_color _int]))
 
 (define-ffi-definer define-curses (ffi-lib "libncurses" '("5" #f)))
 
@@ -48,18 +53,45 @@
 (define-curses wattroff (_fun _WINDOW-pointer _int -> _int))
 (define-curses wattron (_fun _WINDOW-pointer _int -> _int))
 (define-curses attrset (_fun _int -> _int))
-(define-curses attr_set (_fun _attr_t _short _pointer -> _int))
+(define-curses attr_set (_fun _attr_t _pair_t _pointer -> _int))
 (define-curses wattrset (_fun _WINDOW-pointer _int -> _int))
 (define-curses bkgd (_fun _long -> _int))
 (define-curses wbkgd (_fun _WINDOW-pointer _long -> _int))
 (define-curses bkgdset (_fun _long -> _int))
 (define-curses wbkgdset (_fun _WINDOW-pointer _long -> _int))
-(define-curses border (_fun _long _long _long _long 
-                            _long _long _long _long 
+
+(define-curses border (_fun _chtype _chtype _chtype _chtype 
+                            _chtype _chtype _chtype _chtype 
                             -> _int))
-(define-curses wborder (_fun _WINDOW-pointer _long _long _long _long 
-                             _long _long _long _long 
+
+(define-curses wborder (_fun _WINDOW-pointer 
+                             _chtype _chtype _chtype _chtype 
+                             _chtype _chtype _chtype _chtype 
                              -> _int))
+
+(define-curses getcchar (_fun (cchar : (_ptr i _cchar_t-pointer))
+                              (wchar : (_ptr o _wchar))
+                              (attr : (_ptr o _attr_t))
+                              (pair : (_ptr o _pair_t))
+                              (ptr : (_ptr o _pointer))
+                              -> _int -> (list wchar attr pair ptr)))
+
+(define-curses setcchar (_fun (cchar : (_ptr o _cchar_t))
+                              (wchar : (_ptr i _wchar))
+                              (attr : _attr_t)
+                              (pair : _pair_t)
+                              (ptr : (_ptr i _pointer))
+                              -> _int -> cchar))
+
+(define-curses border_set (_fun _cchar_t-pointer _cchar_t-pointer _cchar_t-pointer _cchar_t-pointer
+                                _cchar_t-pointer _cchar_t-pointer _cchar_t-pointer _cchar_t-pointer
+                                -> _int))
+
+(define-curses wborder_set (_fun _WINDOW-pointer 
+                                 _cchar_t-pointer _cchar_t-pointer _cchar_t-pointer _cchar_t-pointer
+                                 _cchar_t-pointer _cchar_t-pointer _cchar_t-pointer _cchar_t-pointer
+                                 -> _int))
+
 (define-curses box (_fun _WINDOW-pointer _long _long -> _int))
 (define-curses chgat (_fun _int _long _short -> _int))
 (define-curses clear (_fun -> _int))
@@ -79,6 +111,11 @@
 (define-curses endwin (_fun -> _int))
 (define-curses newpad (_fun _int _int -> _WINDOW-pointer))
 (define-curses delwin (_fun _WINDOW-pointer -> _int))
+
+(define-curses subwin (_fun _WINDOW-pointer
+                            _int _int _int _int
+                            -> _WINDOW-pointer))
+
 (define-curses derwin (_fun _WINDOW-pointer
                             _int _int _int _int
                             -> _WINDOW-pointer))
@@ -104,7 +141,7 @@
 ; Attrs
 
 (define-curses attr_get (_fun (a : (_ptr o _attr_t))
-                              (c : (_ptr o _short))
+                              (c : (_ptr o _pair_t))
                               (o : (_ptr o _pointer))
                               -> _int -> (list a c o)))
 
