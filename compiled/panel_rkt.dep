@@ -1,0 +1,1 @@
+("8.18" ta6le ("5fd1cc7db43693bdec2e28c0f01b0ba59661d617" . "28936ee301aa158a59e89b585cc90087d6737976") (collects #"ncurses" #"curses.rkt") (collects #"ncurses" #"ffi" #"panel.rkt") (collects #"racket" #"base.rkt") (collects #"racket" #"runtime-config.rkt"))

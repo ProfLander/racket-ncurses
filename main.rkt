@@ -1,4 +1,7 @@
 #lang racket/base
 
-(require "api.rkt")
-(provide (all-from-out "api.rkt"))
+(require "curses.rkt")
+(require "panel.rkt")
+
+(provide (all-from-out "curses.rkt"))
+(provide (all-from-out "panel.rkt"))
